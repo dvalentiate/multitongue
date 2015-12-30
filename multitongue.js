@@ -1,6 +1,6 @@
-'use strict';
-
 var Multitongue = function (options) {
+	'use strict';
+	
 	this.delimiterMap = {
 		groupStart: options && options.groupStart || '....',
 		languageSeparator: options && options.languageSeparator || '..',
