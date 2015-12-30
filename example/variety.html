@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+	</head>
+	<body>
+
+....delimiters and translations as single text node..Beinvienue....
+
+<hr>
+
+.... delimiters and translations as single text node, whitespace noise .. Beinvienue ....
+
+<hr>
+
+<div>....delimiters and translations as single text node inside an immediate element..Beinvienue....</div>
+
+<hr>
+
+<div><div><div>....delimiters and translations as single text node inside a deeply nested element..Beinvienue....</div></div></div>
+
+<hr>
+
+....
+<div>translations in elements separated by delimiters</div>
+..
+<div>Beinvienue</div>
+....
+
+<hr>
+
+<div>
+	....
+	<div>translations in elements separated by delimiters, all contained in element</div>
+	..
+	<div>Beinvienue</div>
+	....
+</div>
+
+<hr>
+
+<div><div><div>
+	....
+	<div>translations in elements separated by delimiters, all contained in deeply nested element</div>
+	..
+	<div>Beinvienue</div>
+	....
+</div></div></div>
+
+<hr>
+
+<div> .... </div>
+<div>delimited and translations all in their own elements</div>
+<div> .. </div>
+<div>Beinvienue</div>
+<div> .... </div>
+
+<hr>
+
+<div>
+	<div>....</div>
+	<div>delimited and translations all in their own elements</div>
+	<div>..</div>
+	<div>Beinvienue</div>
+	<div>....</div>
+</div>
+
+<hr>
+
+<input type="text" value="....Hello..Beinvienue....">
+
+<input type="text" placeholder="....Hello..Beinvienue....">
+
+<script src="../multitongue.js"></script>
+<script>
+	(new Multitongue({langIndex: 0})).reduce(document.getElementsByTagName('body')[0]);
+</script>
+
+	</body>
+</html>

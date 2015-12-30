@@ -1,0 +1,19 @@
+{
+	"name": "multitongue",
+	"version": "0.0.1",
+	"description": "Reduces a NodeList (HTML page) of translated content to only that of the seleted langauge.",
+	"main": "multitongue.js",
+	"scripts": {
+		"postinstall": "uglifyjs multitongue.js --compress --mangle --preamble '// multitongue' > build/multitongue.min.js"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/dvalentiate/multitongue.git"
+	},
+	"dependencies": {},
+	"devDependencies": {
+		"uglify-js": "2.6.1"
+	},
+	"private": false,
+	"license": "Do what you want. Anything goes. The web will keep track."
+}
