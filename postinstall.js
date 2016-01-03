@@ -5,9 +5,13 @@ var fs = require('fs');
 var packageJson = require('./package.json');
 
 // create a minified version in the build directory
-var sourceFile = 'multitongue.js';
-var command = 'uglifyjs --compress --mangle --preamble "// multitongue "' + packageJson.version;
-var minifiedFile = 'build/multitongue.min.js';
+var minifierCmd = 'uglifyjs --compress --mangle';
+
+var libSourceFile = 'multitongue.js';
+var libMinifiedFile = 'build/multitongue.min.js';
+
+var loaderSourceFile = 'content-loaded.js';
+var loaderMinifiedFile = 'build/content-loaded.min.js';
 
 console.log('creating multitongue minified version and examples in build directory');
 
@@ -15,12 +19,22 @@ try {
 	fs.mkdirSync('build');
 } catch (e) {}
 
-var source = fs.readFileSync(sourceFile, 'utf8');
-var minified = child_process.execSync(command, {input: source, encoding: 'utf8'});
-fs.writeFileSync(minifiedFile, minified);
+var libSource = fs.readFileSync(libSourceFile, 'utf8');
+var libMinified = ''
+	+ '// ' + packageJson.name + ' ' + packageJson.version  + '\n'
+	+ child_process.execSync(minifierCmd, {input: libSource, encoding: 'utf8'})
+;
+fs.writeFileSync(libMinifiedFile, libMinified);
+
+var loaderSource = fs.readFileSync(loaderSourceFile, 'utf8');
+var loaderMinified = ''
+	+ child_process.execSync(minifierCmd, {input: loaderSource, encoding: 'utf8'})
+;
+fs.writeFileSync(loaderMinifiedFile, loaderMinified);
 
 // create examples
-var multitongueLib = minified;
+var lib = libMinified;
+var loader = loaderMinified;
 
 var bodyCaseMap = {
 	'delimiters and translations as single text node': ''
@@ -77,19 +91,21 @@ var bodyCaseMap = {
 };
 
 var environmentMap = {
-	'basic': {
+	'basic-head': {
 		head: ''
 			+ '<script>\n'
-			+ '\t' + multitongueLib.split('\n').join('\n\t') + '\n'
+			+ '\t' + lib.split('\n').join('\n\t').trim() + loader.split('\n').join('\n\t').trim() + '\n'
 			+ '\t'
+			+ 'Multitongue.contentLoaded(function () {'
 			+ '(new Multitongue({langIndex: 0})).reduce(document.getElementsByTagName("html")[0]);'
+			+ '})'
 			+ '\n'
 			+ '</script>'
 	},
-	'basic-footer': {
+	'basic-end-of-body': {
 		bodyEnd: ''
 			+ '<script>\n'
-			+ '\t' + multitongueLib.split('\n').join('\n\t') + '\n'
+			+ '\t' + lib.split('\n').join('\n\t').trim() + '\n'
 			+ '\t'
 			+ '(new Multitongue({langIndex: 0})).reduce(document.getElementsByTagName("html")[0]);'
 			+ '\n'
@@ -98,7 +114,7 @@ var environmentMap = {
 	'squarespace': {
 		bodyEnd: ''
 			+ '<script>\n'
-			+ '\t' + multitongueLib.split('\n').join('\n\t') + '\n'
+			+ '\t' + lib.split('\n').join('\n\t').trim() + '\n'
 			+ '\t'
 			+ 'if (window.location === window.top.location) {'
 			+ '(new Multitongue({langIndex: 0})).reduce(document.getElementsByTagName("html")[0]);'
@@ -109,7 +125,7 @@ var environmentMap = {
 	'weebly': {
 		bodyEnd: ''
 			+ '<script>\n'
-			+ '\t' + multitongueLib.split('\n').join('\n\t') + '\n'
+			+ '\t' + lib.split('\n').join('\n\t').trim() + '\n'
 			+ '\t'
 			+ 'if (window.location === window.top.location) {'
 			+ '(new Multitongue({langIndex: 0})).reduce(document.getElementsByTagName("html")[0]);'
