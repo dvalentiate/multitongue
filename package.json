@@ -1,10 +1,10 @@
 {
 	"name": "multitongue",
-	"version": "0.0.1",
+	"version": "0.0.2",
 	"description": "Reduces a NodeList (HTML page) of translated content to only that of the seleted langauge.",
 	"main": "multitongue.js",
 	"scripts": {
-		"postinstall": "uglifyjs multitongue.js --compress --mangle --preamble '// multitongue' > build/multitongue.min.js"
+		"postinstall": "node postinstall.js"
 	},
 	"repository": {
 		"type": "git",
