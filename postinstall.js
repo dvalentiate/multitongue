@@ -149,6 +149,10 @@ for (var i = 0, eKeyList = Object.keys(environmentMap); i < eKeyList.length; i++
 		+ '<html>\n'
 		+ '\t<head>\n'
 		+ '\t\t<meta charset="UTF-8">\n'
+		+ '\t\t<style>\n'
+		+ '\t\t\tsection {border-bottom: 1px solid grey; padding: 0.5em 1em 0.5em 1em; margin: 1em 0 0 0;}\n'
+		+ '\t\t\theader {margin: 0 -1em 0 -1em;}\n'
+		+ '\t\t</style>\n'
 		+ (env.head ? '\t\t' + env.head.split('\n').join('\n\t\t') + '\n' : '')
 		+ '\t</head>\n'
 		+ '\t<body>\n'
@@ -156,10 +160,11 @@ for (var i = 0, eKeyList = Object.keys(environmentMap); i < eKeyList.length; i++
 	
 	for (var j = 0, bcKeyList = Object.keys(bodyCaseMap); j < bcKeyList.length; j++) {
 		var bodyCase = bodyCaseMap[bcKeyList[j]];
-		content += '\t\t<header>' + bcKeyList[j] + '</header>\n';
-		content += '\t\t' + bodyCase.split('\n').join('\n\t\t') + '\n';
-		// content += '\t\t<textarea class="multitongue-ignore">' + bodyCase.replace(/\.\.\.\./g, '&#46; ...') + '</textarea>\n'
-		content += '\t\t\n<hr>\t\t\n';
+		content += '\t\t<section>'
+		content += '\t\t\t<header><strong>' + bcKeyList[j] + '</strong></header>\n';
+		content += '\t\t\t' + bodyCase.split('\n').join('\n\t\t\t') + '\n';
+		// content += '\t\t\t<textarea class="multitongue-ignore">' + bodyCase.replace(/\.\.\.\./g, '&#46; ...') + '</textarea>\n'
+		content += '\t\t</section>\n\t\t\n';
 	}
 	
 	content += ''
