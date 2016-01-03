@@ -157,7 +157,8 @@ for (var i = 0, eKeyList = Object.keys(environmentMap); i < eKeyList.length; i++
 	for (var j = 0, bcKeyList = Object.keys(bodyCaseMap); j < bcKeyList.length; j++) {
 		var bodyCase = bodyCaseMap[bcKeyList[j]];
 		content += '\t\t<header>' + bcKeyList[j] + '<header>\n';
-		content += '\t\t' + bodyCase.split('\n').join('\n\t\t');
+		content += '\t\t' + bodyCase.split('\n').join('\n\t\t') + '\n';
+		content += '\t\t<textarea class="multitongue-ignore">' + bodyCase.replace(/\.\.\.\./g, '&#46; ...') + '</textarea>\n'
 		content += '\t\t\n\t\t\n';
 	}
 	
