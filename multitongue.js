@@ -1,12 +1,18 @@
-var Multitongue = function (options) {
+var Multitongue = function (langIndex, options) {
 	'use strict';
+	
+	if (typeof langIndex === 'number') {
+		this.langIndex = langIndex;
+	} else {
+		options = langIndex;
+		this.langIndex = options && options.langIndex || null;
+	}
 	
 	this.delimiterMap = {
 		groupStart: options && options.groupStart || '....',
 		languageSeparator: options && options.languageSeparator || '..',
 		groupEnd: options && options.groupEnd || '....'
 	};
-	this.langIndex = options && options.langIndex || null;
 	
 	this.filterAttribute = function (value) {
 		var output = [];
@@ -128,6 +134,14 @@ var Multitongue = function (options) {
 	};
 	
 	this.reduce = function (node) {
+		if (typeof node.length !== 'undefined') {
+			// assume nodeList
+			for (var i = 0; i < node.length; i++) {
+				this.reduce(node[i]);
+			}
+			return;
+		}
+		
 		if (node.outerHTML.indexOf(this.delimiterMap.groupStart) === -1) {
 			return;
 		}

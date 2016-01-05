@@ -7,11 +7,12 @@ var packageJson = require('./package.json');
 // create a minified version in the build directory
 var minifierCmd = 'uglifyjs --compress --mangle';
 
-var libSourceFile = 'multitongue.js';
-var libMinifiedFile = 'build/multitongue.min.js';
-
-var loaderSourceFile = 'content-loaded.js';
-var loaderMinifiedFile = 'build/content-loaded.min.js';
+var libMap = {
+	mt: {sourceFile: 'multitongue.js'},
+	loader: {sourceFile: 'content-loaded.js'},
+	element: {sourceFile: 'element.js'},
+	language: {sourceFile: 'language-index.js'}
+};
 
 console.log('creating multitongue minified version and examples in build directory');
 
@@ -19,22 +20,19 @@ try {
 	fs.mkdirSync('build');
 } catch (e) {}
 
-var libSource = fs.readFileSync(libSourceFile, 'utf8');
-var libMinified = ''
-	+ '// ' + packageJson.name + ' ' + packageJson.version  + '\n'
-	+ child_process.execSync(minifierCmd, {input: libSource, encoding: 'utf8'})
-;
-fs.writeFileSync(libMinifiedFile, libMinified);
-
-var loaderSource = fs.readFileSync(loaderSourceFile, 'utf8');
-var loaderMinified = ''
-	+ child_process.execSync(minifierCmd, {input: loaderSource, encoding: 'utf8'})
-;
-fs.writeFileSync(loaderMinifiedFile, loaderMinified);
+for (var i = 0, libKeySet = Object.keys(libMap); i < libKeySet.length; i++) {
+	var lib = libMap[libKeySet[i]];
+	lib.source = fs.readFileSync(lib.sourceFile, 'utf8');
+	
+	lib.minified = ''
+		+ (libKeySet[i] === 'mt' ? '// ' + packageJson.name + ' ' + packageJson.version  + '\n' : '')
+		+ child_process.execSync(minifierCmd, {input: lib.source, encoding: 'utf8'})
+	;
+	lib.minifiedFile = 'build/' + lib.sourceFile.replace(/[.]js$/, '') + '.min.js';
+	fs.writeFileSync(lib.minifiedFile, lib.minified);
+}
 
 // create examples
-var lib = libMinified;
-var loader = loaderMinified;
 
 var bodyCaseMap = {
 	'delimiters and translations as single text node': ''
@@ -94,10 +92,10 @@ var environmentMap = {
 	'basic-head': {
 		head: ''
 			+ '<script>\n'
-			+ '\t' + lib.split('\n').join('\n\t').trim() + loader.split('\n').join('\n\t').trim() + '\n'
+			+ '\t' + (libMap.mt.minified + libMap.loader.minified).split('\n').join('\n\t').trim() + '\n'
 			+ '\t'
 			+ 'Multitongue.contentLoaded(function () {'
-			+ '(new Multitongue({langIndex: 0})).reduce(document.getElementsByTagName("html")[0]);'
+			+ '(new Multitongue({langIndex: 0})).reduce(document.getElementsByTagName("html"));'
 			+ '})'
 			+ '\n'
 			+ '</script>'
@@ -105,30 +103,34 @@ var environmentMap = {
 	'basic-end-of-body': {
 		bodyEnd: ''
 			+ '<script>\n'
-			+ '\t' + lib.split('\n').join('\n\t').trim() + '\n'
+			+ '\t' + libMap.mt.minified.split('\n').join('\n\t').trim() + '\n'
 			+ '\t'
-			+ '(new Multitongue({langIndex: 0})).reduce(document.getElementsByTagName("html")[0]);'
+			+ '(new Multitongue({langIndex: 0})).reduce(document.getElementsByTagName("html"));'
 			+ '\n'
 			+ '</script>'
 	},
 	'squarespace': {
 		bodyEnd: ''
 			+ '<script>\n'
-			+ '\t' + lib.split('\n').join('\n\t').trim() + '\n'
-			+ '\t'
-			+ 'if (window.location === window.top.location) {'
-			+ '(new Multitongue({langIndex: 0})).reduce(document.getElementsByTagName("html")[0]);'
-			+ '}'
-			+ '\n'
+			+ '\tvar langCodeList = [];\n'
+			+ '\t' + (libMap.mt.minified + libMap.element.minified + libMap.language.minified).split('\n').join('\n\t').trim() + '\n'
+			+ '\t// do not translate Squarespace preview uses an iframe, unfortunately other iframe uses also wont render\n'
+			+ '\tvar Mt = Multitongue;\n'
+			+ '\tvar mtl = new Mt.LanguageIndex(langCodeList);\n'
+			+ '\tvar langIndex = mtl.getLangIndex();\n'
+			+ '\tmtl.setCookie(langIndex);\n'
+			+ '\tif (window.location === window.top.location) {\n'
+			+ '\t\t(new Mt(langIndex)).reduce(Mt.element("body, title"));\n'
+			+ '\t}\n'
 			+ '</script>'
 	},
 	'weebly': {
 		bodyEnd: ''
 			+ '<script>\n'
-			+ '\t' + lib.split('\n').join('\n\t').trim() + '\n'
+			+ '\t' + libMap.mt.minified.split('\n').join('\n\t').trim() + '\n'
 			+ '\t'
 			+ 'if (window.location === window.top.location) {'
-			+ '(new Multitongue({langIndex: 0})).reduce(document.getElementsByTagName("html")[0]);'
+			+ '(new Multitongue({langIndex: 0})).reduce(document.getElementsByTagName("html"));'
 			+ '}'
 			+ '\n'
 			+ '</script>'
