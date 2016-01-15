@@ -134,7 +134,7 @@ var Multitongue = function (langIndex, options) {
 	};
 	
 	this.reduce = function (node) {
-		if (typeof node.length !== 'undefined') {
+		if (!node.nodeType && typeof node.length !== 'undefined') {
 			// assume nodeList
 			for (var i = 0; i < node.length; i++) {
 				this.reduce(node[i]);
