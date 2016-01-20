@@ -1,6 +1,6 @@
 {
 	"name": "multitongue",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"description": "Reduces a NodeList (HTML page) of translated content to only that of the seleted langauge.",
 	"main": "multitongue.js",
 	"scripts": {

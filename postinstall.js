@@ -32,6 +32,15 @@ for (var i = 0, libKeySet = Object.keys(libMap); i < libKeySet.length; i++) {
 	fs.writeFileSync(lib.minifiedFile, lib.minified);
 }
 
+function weld() {// first param is the indentation amount, following params are strings to be joined
+	var args = new Array(arguments.length);
+	for (var i = 0; i < args.length; ++i) {
+		args[i] = arguments[i];
+	}
+	
+	return args.slice(1).join('').split('\n').join('\n' + args[0]).trim();
+}
+
 // create examples
 
 var bodyCaseMap = {
@@ -92,7 +101,7 @@ var environmentMap = {
 	'basic-head': {
 		head: ''
 			+ '<script>\n'
-			+ '\t' + (libMap.mt.minified + libMap.loader.minified).split('\n').join('\n\t').trim() + '\n'
+			+ '\t' + weld('\t', libMap.mt.minified, libMap.loader.minified) + '\n'
 			+ '\t'
 			+ 'Multitongue.contentLoaded(function () {'
 			+ '(new Multitongue({langIndex: 0})).reduce(document.getElementsByTagName("html"));'
@@ -103,7 +112,7 @@ var environmentMap = {
 	'basic-end-of-body': {
 		bodyEnd: ''
 			+ '<script>\n'
-			+ '\t' + libMap.mt.minified.split('\n').join('\n\t').trim() + '\n'
+			+ '\t' + weld('\t', libMap.mt.minified) + '\n'
 			+ '\t'
 			+ '(new Multitongue({langIndex: 0})).reduce(document.getElementsByTagName("html"));'
 			+ '\n'
@@ -112,8 +121,8 @@ var environmentMap = {
 	'squarespace': {
 		bodyEnd: ''
 			+ '<script>\n'
-			+ '\tvar langCodeList = [];\n'
-			+ '\t' + (libMap.mt.minified + libMap.element.minified + libMap.language.minified).split('\n').join('\n\t').trim() + '\n'
+			+ '\tvar langCodeList = ["en", "fr", "es"];\n'
+			+ '\t' + weld('\t', libMap.mt.minified, libMap.element.minified, libMap.language.minified) + '\n'
 			+ '\t// do not translate Squarespace preview uses an iframe, unfortunately other iframe uses also wont render\n'
 			+ '\tvar Mt = Multitongue;\n'
 			+ '\tvar mtl = new Mt.LanguageIndex(langCodeList);\n'
@@ -124,10 +133,43 @@ var environmentMap = {
 			+ '\t}\n'
 			+ '</script>'
 	},
+	'squarespace-with-selector': {
+		bodyStart: '<div><div id="email"></div></div>',
+		bodyEnd: ''
+			+ '<script>\n'
+			+ '\tvar langMap = {\n'
+			+ '\t\ten: "English",\n'
+			+ '\t\tfr: "Français",\n'
+			+ '\t\tes: "Español"\n'
+			+ '\t};\n'
+			+ '\tvar langCodeList = Object.keys(langMap);\n'
+			+ '\t' + weld('\t', libMap.mt.minified, libMap.element.minified, libMap.language.minified) + '\n'
+			+ '\t// do not translate Squarespace preview uses an iframe, unfortunately other iframe uses also wont render\n'
+			+ '\tvar Mt = Multitongue;\n'
+			+ '\tvar mtl = new Mt.LanguageIndex(langCodeList);\n'
+			+ '\tvar langIndex = mtl.getLangIndex();\n'
+			+ '\tmtl.setCookie(langIndex);\n'
+			+ '\tif (window.location === window.top.location) {\n'
+			+ '\t\t(new Mt(langIndex)).reduce(Mt.element("body, title"));\n'
+			+ '\t}\n'
+			+ '\tvar languageSelectList = [];\n'
+			+ '\tfor (var i = 0; i < langCodeList.length; i++) {\n'
+			+ '\t\tif (i === langIndex) {\n'
+			+ '\t\t\tcontinue;\n'
+			+ '\t\t}\n'
+			+ '\t\tlanguageSelectList.push(\'<a href="\' + location.pathname + \'?lang=\' + langCodeList[i] + location.hash + \'" style="font-size: larger; margin-left: 1em;">\' + langMap[langCodeList[i]] + \'</a>\');\n'
+			+ '\t}\n'
+			+ '\tvar langEl = document.createElement("div");\n'
+			+ '\tlangEl.innerHTML = languageSelectList.join();\n'
+			+ '\tvar emailEl = document.getElementById("email");\n'
+			+ '\temailEl.parentNode.appendChild(langEl);\n'
+			+ '\temailEl.style.display = "none";\n'
+			+ '</script>'
+	},
 	'weebly': {
 		bodyEnd: ''
 			+ '<script>\n'
-			+ '\t' + libMap.mt.minified.split('\n').join('\n\t').trim() + '\n'
+			+ '\t' + weld('\t', libMap.mt.minified) + '\n'
 			+ '\t'
 			+ 'if (window.location === window.top.location) {'
 			+ '(new Multitongue({langIndex: 0})).reduce(document.getElementsByTagName("html"));'
@@ -158,11 +200,12 @@ for (var i = 0, eKeyList = Object.keys(environmentMap); i < eKeyList.length; i++
 		+ (env.head ? '\t\t' + env.head.split('\n').join('\n\t\t') + '\n' : '')
 		+ '\t</head>\n'
 		+ '\t<body>\n'
+		+ (env.bodyStart ? '\t\t' + env.bodyStart.split('\n').join('\n\t\t') + '\n' : '')
 	;
 	
 	for (var j = 0, bcKeyList = Object.keys(bodyCaseMap); j < bcKeyList.length; j++) {
 		var bodyCase = bodyCaseMap[bcKeyList[j]];
-		content += '\t\t<section>'
+		content += '\t\t<section>\n'
 		content += '\t\t\t<header><strong>' + bcKeyList[j] + '</strong></header>\n';
 		content += '\t\t\t' + bodyCase.split('\n').join('\n\t\t\t') + '\n';
 		// content += '\t\t\t<textarea class="multitongue-ignore">' + bodyCase.replace(/\.\.\.\./g, '&#46; ...') + '</textarea>\n'
