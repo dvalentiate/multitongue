@@ -52,6 +52,14 @@ cd multitongue
 npm install
 ```
 
-### Including it on your page
+### Including It On Your Page
 
 See examples in your build/examples directory, particularly `squarespace-with-selector.html`.
+
+### Prebuilt Version
+
+For convenience I have created the [Multitongue build repository](https://github.com/dvalentiate/multitongue-build) that has the minimized versions of this project's various compoments.
+
+## Credit Where It Is Due
+
+This project was inspired by the [multilingualizer product/service](http://www.affiliatewebdesigners.com/multilingualizer-demo/) of [Affliate Web Designers](http://www.affiliatewebdesigners.com/). They seem like good folk.  While extensive testing hasn't been done it is expected that this project improves on both the download size and page processing time over Multilingualizer.
