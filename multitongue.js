@@ -48,89 +48,113 @@ var Multitongue = function (langIndex, options) {
 		return output.join('');
 	};
 	
-	this.nodeFilter = function (node, indexOfFunction) {
-		var childSetToRemove = [];
-		var offset = 0;
+	this.walk = function (startNode, endNode, beforeFn, afterFn, enterDepthFn, childFn, parentFn) {
+		var n = startNode;
 		
-		var childList = node.childNodes;
-		while (true) {
-			var start = indexOfFunction(childList, this.delimiterMap.groupStart, offset);
-			if (start === -1) {
-				break;
+		do {
+			if (typeof beforeFn === 'function') {
+				beforeFn(n);
 			}
 			
-			var end = indexOfFunction(childList, this.delimiterMap.groupEnd, start + 1);
-			if (end === -1) {
-				break;
+			var next;
+			if ((typeof enterDepthFn !== 'function' || enterDepthFn(n)) && n.firstChild) {
+				next = n.firstChild;
+				if (typeof childFn === 'function') {
+					childFn(n, next);
+				}
+			} else if (n.nextSibling) {
+				next = n.nextSibling;
+			} else {
+				next = n;
+				do {
+					var parent = next.parentNode;
+					if (typeof parentFn === 'function') {
+						parentFn(next, parent);
+					}
+					next = parent;
+				} while (next !== endNode && !next.nextSibling);
+				
+				if (next !== endNode) {
+					next = next.nextSibling;
+				}
 			}
 			
-			var startTrans = indexOfFunction(childList, this.delimiterMap.languageSeparator, start + 1, end - 1, this.langIndex);
-			if (startTrans === -1) {
-				startTrans = start;
-			}
-			for (var i = start; i < startTrans + 1; i++) {
-				childSetToRemove.push(childList[i]);
+			if (typeof afterFn === 'function') {
+				afterFn(n, next);
 			}
 			
-			var endTrans = indexOfFunction(childList, this.delimiterMap.languageSeparator, startTrans + 1, end - 1);
-			if (endTrans === -1) {
-				endTrans = end;
-			}
-			for (var i = endTrans; i < end + 1; i++) {
-				childSetToRemove.push(childList[i]);
-			}
-			
-			offset = end + 1;
-		}
-		
-		return childSetToRemove;
+			n = next;
+		} while (n !== endNode);
 	};
 	
-	this.childNodeIndexOf = function (childList, delimiter, start, end, nth) {
-		var pos = -1;
-		
-		if (typeof end === 'undefined') {
-			end = childList.length;
-		}
-		nth = typeof nth === 'undefined' ? 1 : nth;
-		
-		for (var i = start || 0, n = 0; i < childList.length && i < end && n < nth; i++) {
-			if (childList[i].nodeType !== Node.ELEMENT_NODE || childList[i].childNodes.length !== 1) {
-				continue;
-			}
-			
-			var childText = childList[i].firstChild;
-			if (!childText || childText.nodeType !== Node.TEXT_NODE || childText.data.trim() !== delimiter) {
-				continue;
-			}
-			
-			n++;
-			
-			pos = i;
+	this.textNodeSeparate = function (node, delimiter) {
+		var pos = node.data.indexOf(delimiter);
+		if (pos === -1) {
+			// no delimiter found, done
+			return node;
 		}
 		
-		return pos;
+		// separate into pre, delimiter, and post text nodes
+		if (pos > 0) {
+			node = node.splitText(pos);
+		}
+		
+		if (node.data.length > delimiter.length) {
+			node.splitText(delimiter.length);
+		}
+		
+		// returns node for delimiter
+		return node;
 	};
 	
-	this.nodeIndexOf = function (childList, delimiter, start, end, nth) {
-		var pos = -1;
-		
-		if (typeof end === 'undefined') {
-			end = childList.length;
-		}
-		nth = typeof nth === 'undefined' ? 1 : nth;
-		
-		for (var i = start || 0, n = 0; i < childList.length && i < end && n < nth; i++) {
-			if (childList[i].nodeType !== Node.TEXT_NODE || childList[i].data !== delimiter) {
-				continue;
+	// removes nodes not in this objects language index, expects startNode and
+	// endNode parameters represent the boundaries of a language group
+	this.pig = function (startNode, endNode) {
+		var self = this;
+		var langIndex = 0;
+		var depthWithRemovalLanguage = 0;
+		var beforeFn = function(n) {
+			if (n === startNode || n === endNode) {
+				return; // exclude ends
+			}
+			if (n.nodeType === Node.TEXT_NODE) {
+				if (n.data === self.delimiterMap.languageSeparator) {
+					++langIndex;
+					if (langIndex === self.langIndex) {
+						depthWithRemovalLanguage = 0;
+					}
+				}
+				n = self.textNodeSeparate(n, self.delimiterMap.languageSeparator);
+			}
+		};
+		var childFn = function () {
+			if (langIndex !== self.langIndex) {
+				++depthWithRemovalLanguage;
+			}
+		};
+		var parentFn = function (n) {
+			if (depthWithRemovalLanguage > 0) {
+				n.parentNode.removeChild(n);
+				--depthWithRemovalLanguage;
+			}
+		};
+		var afterFn = function (n) {
+			if (n === startNode || n === endNode) {
+				return; // exclude ends
 			}
 			
-			n++;
+			if (n.firstChild || n.parentNode === null) {
+				return;
+			}
 			
-			pos = i;
-		}
+			if (langIndex !== self.langIndex
+				|| n.nodeType === Node.TEXT_NODE && n.data === self.delimiterMap.languageSeparator
+			) {
+				n.parentNode.removeChild(n);
+			}
+		};
 		
-		return pos;
+		this.walk(startNode, endNode, beforeFn, afterFn, null, childFn, parentFn);
 	};
 	
 	this.reduce = function (node) {
@@ -142,91 +166,46 @@ var Multitongue = function (langIndex, options) {
 			return;
 		}
 		
-		if (node.outerHTML.indexOf(this.delimiterMap.groupStart) === -1) {
-			return;
-		}
-		
-		// handles delimiters inside attributes of node
-		// Example: <input value="....Hello..Bonjour....">
-		for (var i = 0; i < node.attributes.length; i++) {
-			var newValue = this.filterAttribute(node.attributes[i].value);
-			if (newValue !== null) {
-				node.attributes[i].value = newValue;
+		var groupStartNode = null;
+		var self = this;
+		var beforeFn = function (n) {
+			if (n.nodeType === Node.TEXT_NODE) {
+				if (groupStartNode === null) {
+					n = self.textNodeSeparate(n, self.delimiterMap.groupStart);
+				} else {
+					n = self.textNodeSeparate(n, self.delimiterMap.groupEnd);
+				}
 			}
-		}
-		
-		// handles delimiters inside child element nodes of node
-		// Example:
-		//     <p>....</p>
-		//     <p>Hello</p>
-		//     <p>..</p>
-		//     <p>Bonjour</p>
-		//     <p>....</p>
-		var childSetToRemove = this.nodeFilter(node, this.childNodeIndexOf);
-		for (var i = 0; i < childSetToRemove.length; i++) {
-			node.removeChild(childSetToRemove[i]);
-		}
-		
-		// splits text nodes into parts based on delimiters. Enables easier
-		// processing of the nodes
-		var childList = node.childNodes;
-		var delimiterList = [this.delimiterMap.groupStart, this.delimiterMap.groupEnd, this.delimiterMap.languageSeparator];
-		for (var i = 0; i < childList.length; i++) {
-			var child = childList[i];
-			
-			if (child.nodeType !== Node.TEXT_NODE) {
-				continue;
-			}
-			
-			while (true) {
-				var pos = child.data.length;
-				var len = 0;
-				for (var j = 0; j < delimiterList.length; j++) {
-					var delimiterPos = child.data.indexOf(delimiterList[j]);
-					if (delimiterPos !== -1 && delimiterPos < pos) {
-						len = delimiterList[j].length;
-						pos = delimiterPos;
+		};
+		var afterFn = function (n) {
+			if (n.nodeType === Node.TEXT_NODE) {
+				if (groupStartNode === null) {
+					if (n.data === self.delimiterMap.groupStart) {
+						groupStartNode = n;
+					}
+				} else {
+					if (n.data === self.delimiterMap.groupEnd) {
+						self.pig(groupStartNode, n);
+						groupStartNode.parentNode.removeChild(groupStartNode);
+						n.parentNode.removeChild(n);
+						
+						groupStartNode = null;
 					}
 				}
-				
-				if (pos === child.data.length || len === child.data.length) {
-					break;
+			} else if (n.nodeType === Node.ELEMENT_NODE) {
+				for (var i = 0; i < n.attributes.length; i++) {
+					var newValue = self.filterAttribute(n.attributes[i].value);
+					if (newValue !== null) {
+						n.attributes[i].value = newValue;
+					}
 				}
-				
-				if (pos !== 0) {
-					child = child.splitText(pos);
-					i++;
-				}
-				
-				child = child.splitText(len);
-				i++;
 			}
-		}
+		};
 		
-		// handles delimiters inside node
-		// Example A:
-		//     ....Hello..Bonjour....
-		// Example B:
-		//     ....
-		//     <p>Hello</p>
-		//     ..
-		//     <p>Bonjour</p>
-		//     ....
-		var childrenToRemove = this.nodeFilter(node, this.nodeIndexOf);
-		for (var i = 0; i < childrenToRemove.length; i++) {
-			node.removeChild(childrenToRemove[i]);
-		}
+		var enterDepthFn = function (n) {
+			return n.tagName !== 'SCRIPT';
+		};
 		
-		// iterate through any child element nodes of node
-		var childList = node.childNodes;
-		for (var i = 0; i < childList.length; i++) {
-			var child = childList[i];
-			
-			if (child.nodeType !== Node.ELEMENT_NODE) {
-				continue
-			}
-			
-			this.reduce(child);
-		}
-	}
+		this.walk(node, node, beforeFn, afterFn, enterDepthFn);
+	};
 };

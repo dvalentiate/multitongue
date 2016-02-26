@@ -47,6 +47,12 @@ var bodyCaseMap = {
 	'delimiters and translations as single text node': ''
 		+ '....Who We Are..Qui nous sommes..Quiénes somos....'
 	,
+	'multiple groups of delimiters and translations in a single text node': ''
+		+ '....Who We Are..Qui nous sommes..Quiénes somos.... ....Blog..Blogue..Blog....'
+	,
+	'multiple groups of delimiters and translations, run together, in a single text node': ''
+		+ '....Who We Are..Qui nous sommes..Quiénes somos........Blog..Blogue..Blog....'
+	,
 	'delimiters and translations as single text node, whitespace noise': ''
 		+ '.... Who We Are .. Qui nous sommes .. Quiénes somos ....'
 	,
@@ -93,8 +99,32 @@ var bodyCaseMap = {
 		+ '\t<div>....</div>\n'
 		+ '</div></div></div>'
 	,
+	'delimited and translations are all deep in their own elements': ''
+		+ '<div><div>....</div></div>\n'
+		+ '<div><div>Who We Are</div></div>\n'
+		+ '<div><div>..</div></div>\n'
+		+ '<div><div>Qui nous sommes</div></div>\n'
+		+ '<div><div>..</div></div>\n'
+		+ '<div><div>Quiénes somos</div></div>\n'
+		+ '<div><div>....</div></div>'
+	,
+	'delimited and translations are all deep in their own elements, with distractor elements cluttering things up': ''
+		+ '<div>\n'
+		+ '\t<div>distractor pre translation</div>\n'
+		+ '\t<div>....</div>\n'
+		+ '</div>\n'
+		+ '<div><div>Who We Are</div></div>\n'
+		+ '<div><div>..</div></div>\n'
+		+ '<div><div>Qui nous sommes</div></div>\n'
+		+ '<div><div>..</div></div>\n'
+		+ '<div><div>Quiénes somos</div></div>\n'
+		+ '<div>\n'
+		+ '\t<div>....</div>\n'
+		+ '\t<div>distractor post translation</div>\n'
+		+ '</div>'
+	,
 	'delimiters and translations in an element attribute': ''
-		+ '<input type="text" value="....Who We Are..Qui nous sommes..Quiénes somos....">'
+		+ '<input type="text" value="....Who We Are..Qui nous sommes..Quiénes somos...." title="distractor">'
 };
 
 var environmentMap = {
