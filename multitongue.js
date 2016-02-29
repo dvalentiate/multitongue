@@ -133,7 +133,7 @@ var Multitongue = function (langIndex, options) {
 		return pos;
 	};
 	
-	this.reduce = function (node) {
+	this.reduceOld = function (node) {
 		if (!node.nodeType && typeof node.length !== 'undefined') {
 			// assume nodeList
 			for (var i = 0; i < node.length; i++) {
@@ -228,5 +228,104 @@ var Multitongue = function (langIndex, options) {
 			
 			this.reduce(child);
 		}
-	}
+	};
+	
+	this.textNodeSeparate = function (node, delimiter) {
+		var pos = node.data.indexOf(delimiter);
+		if (pos === -1) {
+			// no delimiter found, done
+			return node;
+		}
+		
+		// separate into pre, delimiter, and post text nodes
+		if (pos > 0) {
+			node = node.splitText(pos);
+		}
+		if (node.data.length > delimiter.length) {
+			node.splitText(delimiter.length);
+		}
+		
+		// returns node for delimiter
+		return node;
+	};
+	
+	// removes nodes not in this objects language index, expects startNode and
+	// endNode parameters represent the boundaries of a language group
+	this.pig = function (startNode, endNode) {
+		var langIndex = 0;
+		var n = startNode;
+		
+		do {
+			if (n.nodeType === Node.TEXT_NODE) {
+				n = this.textNodeSeparate(n, this.delimiterMap.languageSeparator);
+				if (n.data === this.delimiterMap.languageSeparator) {
+					++langIndex;
+				}
+			}
+			if (langIndex !== this.langIndex
+				|| n.nodeType === Node.TEXT_NODE && n.data === this.delimiterMap.languageSeparator
+			) {
+				// provides the next node using depth first search order
+				var next = n.firstChild || n.nextSibling || n.parentNode.nextSibling;
+				n.parentNode.removeChild(n);
+				n = next;
+			}
+		} while (n !== endNode);
+	};
+	
+	// reduce nodes from go through DOM in depth first search order, call 
+	this.reduce = function (node) {
+		if (!node.nodeType && typeof node.length !== 'undefined') {
+			// assume nodeList
+			for (var i = 0; i < node.length; i++) {
+				this.reduce(node[i]);
+			}
+			return;
+		}
+		
+		var groupStartNode = null;
+		
+		var n = node;
+		
+		while (true) {
+			console.log('n', n, 'n.firstChild', n.firstChild, 'n.nextSibling', n.nextSibling, 'n.parentNode', n.parentNode);
+			
+			if (n.nodeType === Node.TEXT_NODE) {
+				if (groupStartNode === null) {
+					n = this.textNodeSeparate(n, this.delimiterMap.groupStart);
+					if (n.data === this.delimiterMap.groupStart) {
+						console.log('groupStartNode', n);
+						groupStartNode = n;
+					}
+				} else {
+					n = this.textNodeSeparate(n, this.delimiterMap.groupEnd);
+					if (n.data === this.delimiterMap.groupEnd) {
+						console.log('groupEndNode', n);
+						this.pig(groupStartNode, n);
+						
+						groupStartNode = null;
+					}
+				}
+			}
+			
+			var depthOrSibling = n.firstChild || n.nextSibling;
+			if (depthOrSibling) {
+				console.log('depthOrSibling');
+				n = depthOrSibling;
+			} else {
+				console.log('ancestor');
+				while (n.parentNode !== node.parentNode && !n.parentNode.nextSibling) {
+					console.log('up');
+					n = n.parentNode;
+				}
+				
+				if (n.parentNode === node.parentNode) {
+					break;
+				}
+				
+				n = n.parentNode.nextSibling;
+				console.log('n.parentNode.nextSibling', n);
+			}
+		}
+	};
 };
