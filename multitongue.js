@@ -239,10 +239,15 @@ var Multitongue = function (langIndex, options) {
 		
 		// separate into pre, delimiter, and post text nodes
 		if (pos > 0) {
+			console.log('split pre pre', node.data, '"', node.nextSibling && node.nextSibling.nodeType === Node.TEXT_NODE && node.nextSibling.data || null, '"');
 			node = node.splitText(pos);
+			console.log('split pre post', node.data, '"', node.nextSibling && node.nextSibling.nodeType === Node.TEXT_NODE && node.nextSibling.data || null, '"');
 		}
+		
 		if (node.data.length > delimiter.length) {
+			console.log('split post pre', node.data, '"', node.nextSibling && node.nextSibling.nodeType === Node.TEXT_NODE && node.nextSibling.data || null, '"');
 			node.splitText(delimiter.length);
+			console.log('split post post', node.data, '"', node.nextSibling && node.nextSibling.nodeType === Node.TEXT_NODE && node.nextSibling.data || null, '"');
 		}
 		
 		// returns node for delimiter
@@ -288,17 +293,21 @@ var Multitongue = function (langIndex, options) {
 		var n = node;
 		
 		while (true) {
-			console.log('n', n, 'n.firstChild', n.firstChild, 'n.nextSibling', n.nextSibling, 'n.parentNode', n.parentNode);
+			console.log('n', n.tagName, n, 'n.firstChild', n.firstChild, 'n.nextSibling', n.nextSibling, 'n.parentNode', n.parentNode);
 			
 			if (n.nodeType === Node.TEXT_NODE) {
 				if (groupStartNode === null) {
+					console.log('pre start textNodeSeparate', n, n.data);
 					n = this.textNodeSeparate(n, this.delimiterMap.groupStart);
+					console.log('post start textNodeSeparate', n, n.data, n.previousSibling, n.nextSibling);
 					if (n.data === this.delimiterMap.groupStart) {
-						console.log('groupStartNode', n);
+						console.log('groupStartNode', n, n.data);
 						groupStartNode = n;
 					}
 				} else {
+					console.log('pre end textNodeSeparate', n, n.data);
 					n = this.textNodeSeparate(n, this.delimiterMap.groupEnd);
+					console.log('post end textNodeSeparate', n, n.data);
 					if (n.data === this.delimiterMap.groupEnd) {
 						console.log('groupEndNode', n);
 						this.pig(groupStartNode, n);
@@ -308,14 +317,14 @@ var Multitongue = function (langIndex, options) {
 				}
 			}
 			
-			var depthOrSibling = n.firstChild || n.nextSibling;
+			var depthOrSibling = n.tagName !== 'SCRIPT' && n.firstChild || n.nextSibling;
 			if (depthOrSibling) {
-				console.log('depthOrSibling');
+				// console.log('depthOrSibling');
 				n = depthOrSibling;
 			} else {
-				console.log('ancestor');
+				// console.log('ancestor');
 				while (n.parentNode !== node.parentNode && !n.parentNode.nextSibling) {
-					console.log('up');
+					// console.log('up');
 					n = n.parentNode;
 				}
 				
@@ -324,7 +333,7 @@ var Multitongue = function (langIndex, options) {
 				}
 				
 				n = n.parentNode.nextSibling;
-				console.log('n.parentNode.nextSibling', n);
+				// console.log('n.parentNode.nextSibling', n);
 			}
 		}
 	};
