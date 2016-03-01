@@ -233,6 +233,8 @@ for (var i = 0, eKeyList = Object.keys(environmentMap); i < eKeyList.length; i++
 		+ (env.bodyStart ? '\t\t' + env.bodyStart.split('\n').join('\n\t\t') + '\n' : '')
 	;
 	
+	bodyCaseMap = {'delimiters and translations as single text node': bodyCaseMap['delimiters and translations as single text node']};
+	
 	for (var j = 0, bcKeyList = Object.keys(bodyCaseMap); j < bcKeyList.length; j++) {
 		var bodyCase = bodyCaseMap[bcKeyList[j]];
 		content += '\t\t<section>\n'
