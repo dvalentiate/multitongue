@@ -12,7 +12,7 @@
 	},
 	"dependencies": {},
 	"devDependencies": {
-		"uglify-js": "2.6.1"
+		"uglify-js": "2.8.12"
 	},
 	"private": false,
 	"license": "Do what you want. Anything goes. The web will keep track."
