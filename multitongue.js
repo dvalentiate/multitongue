@@ -194,6 +194,9 @@ var Multitongue = function (langIndex, options) {
 				}
 			} else if (n.nodeType === Node.ELEMENT_NODE) {
 				for (var i = 0; i < n.attributes.length; i++) {
+					if (['href', 'src'].indexOf(n.attributes[i].name) !== -1) {
+						continue;
+					}
 					var newValue = self.filterAttribute(n.attributes[i].value);
 					if (newValue !== null) {
 						n.attributes[i].value = newValue;
