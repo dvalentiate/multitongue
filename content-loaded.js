@@ -1,4 +1,6 @@
 Multitongue.contentLoaded = function (readyCallback) {
+	'use strict';
+	
 	// Mozilla, Opera and webkit nightlies currently support this event
 	if (document.addEventListener) {
 		// Use the handy event callback
