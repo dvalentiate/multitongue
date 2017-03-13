@@ -21,7 +21,12 @@ Multitongue.LanguageIndex = function (supportedLangCodeList, options) {
 		if (this.codeList.indexOf(langIndexOrCode) === -1) {
 			throw new Error('invalid value for param langIndexOrCode');
 		}
-		document.cookie = 'langCode=' + langIndexOrCode;
+		var cookie = ['langCode=' + langIndexOrCode];
+		if (options && options.cookie && options.cookie.path) {
+			cookie.push('path=' + options.cookie.path);
+		}
+		
+		document.cookie = cookie.join(';');
 	};
 	
 	this.getHashCode = function () {
